@@ -3,6 +3,7 @@ package io.github.jwyoon1220.bukkitsoundlib
 import io.github.jwyoon1220.bukkitsoundlib.def.DefaultAuthHandler
 import io.github.jwyoon1220.bukkitsoundlib.handler.AuthHandler
 import io.github.jwyoon1220.bukkitsoundlib.handler.ConnectionListener
+import io.github.jwyoon1220.bukkitsoundlib.handler.MessageHandler
 import io.github.jwyoon1220.bukkitsoundlib.model.VoiceClient
 import io.ktor.server.application.install
 import io.ktor.server.engine.ApplicationEngine
@@ -17,8 +18,11 @@ import io.ktor.server.websocket.timeout
 import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
+import kotlinx.coroutines.channels.consumeEach
+import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.toKotlinDuration
 
 class VoiceServer(
     private val config: VoiceServerConfig,
@@ -29,7 +33,7 @@ class VoiceServer(
 ) {
 
     private val clients = ConcurrentHashMap<UUID, VoiceClient>()
-    private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> = null
+    private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
 
     fun start() {
         if (engine != null) return
@@ -40,8 +44,8 @@ class VoiceServer(
             port = config.port
         ) {
             install(WebSockets) {
-                pingPeriod = Duration.ofSeconds(config.pingSeconds)
-                timeout = Duration.ofSeconds(config.timeoutSeconds)
+                pingPeriod = Duration.ofSeconds(config.pingSeconds).toKotlinDuration()
+                timeout = Duration.ofSeconds(config.timeoutSeconds).toKotlinDuration()
             }
 
             routing {
